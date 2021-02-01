@@ -16,3 +16,7 @@
 
 # Secrets
 .secrets.json
+
+# Telegram
+tdlib-db/*
+tdlib-files/*
