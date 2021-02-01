@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Arman92/go-tdlib"
 )
@@ -26,6 +30,15 @@ func main() {
 		FileDirectory:       "./tdlib-files",
 		IgnoreFileNames:     false,
 	})
+
+	// Handle Ctrl+C, gracefully exit and shutdown tdlib
+	ch := make(chan os.Signal, 2)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-ch
+		client.DestroyInstance()
+		os.Exit(1)
+	}()
 
 	for {
 		currentState, _ := client.Authorize()
@@ -59,11 +72,42 @@ func main() {
 		}
 	}
 
-	// Main loop
-	for update := range client.GetRawUpdatesChannel(100) {
-		// Show all updates
-		fmt.Println(update.Data)
-		fmt.Print("\n\n")
+	go func() {
+		// Create a filter function which will be used to filter out unwanted tdlib messages
+		eventFilter := func(msg *tdlib.TdMessage) bool {
+			return true
+			// 	updateMsg := (*msg).(*tdlib.UpdateNewMessage)
+			// 	// For example, we want incomming messages from user with below id:
+			// 	if updateMsg.Message.SenderUserID == 41507975 {
+			// 		retufalsern true
+			// 	}
+			// 	return false
+		}
+
+		// Here we can add a receiver to retreive any message type we want
+		// We like to get UpdateNewMessage events and with a specific FilterFunc
+		receiver := client.AddEventReceiver(&tdlib.UpdateNewMessage{}, eventFilter, 5)
+		for newMsg := range receiver.Chan {
+			fmt.Println(newMsg)
+			updateMsg := (newMsg).(*tdlib.UpdateNewMessage)
+			// We assume the message content is simple text: (should be more sophisticated for general use)
+			msgText := updateMsg.Message.Content.(*tdlib.MessageText)
+			fmt.Println("MsgText:  ", msgText.Text)
+			fmt.Print("\n\n")
+		}
+
+	}()
+
+	for {
+		time.Sleep(10)
 	}
+
+	// rawUpdates gets all updates comming from tdlib
+	// rawUpdates := client.GetRawUpdatesChannel(100)
+	// for update := range rawUpdates {
+	// 	// Show all updates
+	// 	fmt.Println(update.Data)
+	// 	fmt.Print("\n\n")
+	// }
 
 }
