@@ -1,18 +1,19 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 
-	"github.com/adshao/go-binance/v2"
+	"github.com/nockty/pump-it-up/internal/telegram"
 )
 
 type secrets struct {
-	APIKey    string `json:"apiKey"`
-	SecretKey string `json:"secretKey"`
+	APIKey    string `json:"binanceApiKey"`
+	SecretKey string `json:"binanceSecretKey"`
+	APIID     string `json:"telegramApiId"`
+	APIHash   string `json:"telegramApiHash"`
 }
 
 func getSecrets(fileName string) (*secrets, error) {
@@ -36,16 +37,22 @@ func main() {
 		println(err)
 		return
 	}
-	client := binance.NewClient(secrets.APIKey, secrets.SecretKey)
-	res, err := client.NewGetAccountService().Do(context.Background())
-	if err != nil {
-		println(err)
-		return
-	}
-	for _, b := range res.Balances {
-		if b.Asset != "BTC" {
-			continue
-		}
-		fmt.Printf("Balance: %s\n", b.Free)
+	// client := binance.NewClient(secrets.APIKey, secrets.SecretKey)
+	// res, err := client.NewGetAccountService().Do(context.Background())
+	// if err != nil {
+	// 	println(err)
+	// 	return
+	// }
+	// for _, b := range res.Balances {
+	// 	if b.Asset != "BTC" {
+	// 		continue
+	// 	}
+	// 	fmt.Printf("Balance: %s\n", b.Free)
+	// }
+	tp := telegram.NewTelegramPoller(secrets.APIID, secrets.APIHash)
+	tp.GetInteractiveAuthorization()
+	go tp.Run()
+	for coin := range tp.BuyChan {
+		fmt.Printf("Buy %s now!", coin)
 	}
 }
