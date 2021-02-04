@@ -1,7 +1,6 @@
 package binance
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"strings"
@@ -13,14 +12,11 @@ import (
 const btc = "BTC"
 
 type Trader struct {
-	client        *binance.Client
-	btcAmount     string
-	symbolBuilder bytes.Buffer
+	client    *binance.Client
+	btcAmount string
 }
 
 func NewTrader(APIKey, secretKey string, BTCAmount string) *Trader {
-	var symbolBuilder strings.Builder
-	symbolBuilder.Grow(100)
 	return &Trader{
 		client:    binance.NewClient(APIKey, secretKey),
 		btcAmount: BTCAmount,
@@ -28,10 +24,11 @@ func NewTrader(APIKey, secretKey string, BTCAmount string) *Trader {
 }
 
 func (t *Trader) Trade(coin string) {
-	symbolBuilder := t.symbolBuilder
-	fmt.Fprintf(&symbolBuilder, coin)
-	fmt.Fprintf(&symbolBuilder, btc)
-	symbol := symbolBuilder.String()
+	var b strings.Builder
+	b.Grow(10)
+	fmt.Fprintf(&b, coin)
+	fmt.Fprintf(&b, btc)
+	symbol := b.String()
 	buyOrder, err := t.client.NewCreateOrderService().Symbol(symbol).
 		Side(binance.SideTypeBuy).Type(binance.OrderTypeMarket).
 		QuoteOrderQty(t.btcAmount).Do(context.Background())
