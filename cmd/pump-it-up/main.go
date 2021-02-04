@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 
+	"github.com/nockty/pump-it-up/internal/binance"
 	"github.com/nockty/pump-it-up/internal/telegram"
 )
 
@@ -32,27 +32,21 @@ func getSecrets(fileName string) (*secrets, error) {
 }
 
 func main() {
+	args := os.Args
+	if len(args) != 2 {
+		println("Usage: simple-binance [BTCAmount]")
+		os.Exit(64)
+	}
+	BTCAmount := args[1]
 	secrets, err := getSecrets(".secrets.json")
 	if err != nil {
 		println(err)
 		return
 	}
-	// client := binance.NewClient(secrets.APIKey, secrets.SecretKey)
-	// res, err := client.NewGetAccountService().Do(context.Background())
-	// if err != nil {
-	// 	println(err)
-	// 	return
-	// }
-	// for _, b := range res.Balances {
-	// 	if b.Asset != "BTC" {
-	// 		continue
-	// 	}
-	// 	fmt.Printf("Balance: %s\n", b.Free)
-	// }
-	tp := telegram.NewTelegramPoller(secrets.APIID, secrets.APIHash)
+	bt := binance.NewTrader(secrets.APIKey, secrets.SecretKey, BTCAmount)
+	tp := telegram.NewPoller(secrets.APIID, secrets.APIHash)
 	tp.GetInteractiveAuthorization()
 	go tp.Run()
-	for coin := range tp.BuyChan {
-		fmt.Printf("Buy %s now!", coin)
-	}
+	coin := <-tp.BuyChan
+	bt.Trade(coin)
 }
