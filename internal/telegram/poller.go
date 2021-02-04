@@ -8,8 +8,10 @@ import (
 	"github.com/Arman92/go-tdlib"
 )
 
-// const bigPumpSignalID int64 = -1001257721998
-const bigPumpSignalID int64 = 260737464
+const bigPumpSignalID int64 = -1001257721998
+
+// const testID int64 = 260737464 // for testing
+
 const pumpCoinRegex = `^.*\$([a-zA-Z]+).*$`
 
 type Poller struct {
