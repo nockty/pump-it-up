@@ -3,6 +3,7 @@ package binance
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -46,4 +47,17 @@ func (t *Trader) Trade(coin string) {
 	}
 	fmt.Printf("Spent BTC: %s\n", buyOrder.CummulativeQuoteQuantity)
 	fmt.Printf("Earnt BTC: %s\n", sellOrder.CummulativeQuoteQuantity)
+	fmt.Printf("Qty      : %s\n", buyOrder.ExecutedQuantity)
+	spentBTC, err := strconv.ParseFloat(buyOrder.CummulativeQuoteQuantity, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	qty, err := strconv.ParseFloat(buyOrder.ExecutedQuantity, 64)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	price := spentBTC / qty
+	fmt.Printf("Price    : %f\n", price)
 }
